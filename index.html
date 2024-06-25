@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Archivos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .file-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .file-list li {
+            margin-bottom: 5px;
+        }
+        .file-list li a {
+            text-decoration: none;
+            color: #007bff;
+            display: block;
+        }
+        .file-list li a:hover {
+            text-decoration: underline;
+        }
+        .center-content {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .text-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestor de Archivos</h1>
+    <div class="center-content">
+        <div class="text-box">
+            <h2>Sitios Webs</h2>
+            <ul class="file-list" id="fileList">
+                <!-- Los archivos se cargarán aquí dinámicamente -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const fileList = document.getElementById("fileList");
+
+            // Función para cargar los archivos y directorios
+            function loadFiles() {
+                fetchFiles(".");
+            }
+
+            // Función para obtener y cargar archivos y directorios
+            function fetchFiles(directory) {
+                fetch(directory)
+                    .then(response => response.text())
+                    .then(data => {
+                        const parser = new DOMParser();
+                        const htmlDoc = parser.parseFromString(data, 'text/html');
+                        const links = htmlDoc.querySelectorAll('a');
+
+                        links.forEach(link => {
+                            const listItem = document.createElement("li");
+                            const fileUrl = directory + '/' + link.getAttribute('href');
+                            const fileName = link.textContent.trim(); // Eliminar espacios en blanco alrededor del nombre
+
+                            const linkElement = document.createElement("a");
+                            linkElement.textContent = fileName;
+                            linkElement.href = "#"; // Cambiar href por "#" para evitar que los enlaces naveguen
+                            linkElement.addEventListener("click", () => openFile(fileUrl));
+
+                            listItem.appendChild(linkElement);
+                            fileList.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching files:', error));
+            }
+
+            // Función para abrir archivos
+            function openFile(fileUrl) {
+                if (fileUrl.endsWith(".txt")) {
+                    fetch(fileUrl)
+                        .then(response => response.text())
+                        .then(data => {
+                            const txtWindow = window.open("", "_blank");
+                            txtWindow.document.write(`<html><head><title>${fileUrl}</title></head><body><pre>${data}</pre></body></html>`);
+                            txtWindow.document.close();
+                        })
+                        .catch(error => console.error('Error fetching text file:', error));
+                } else if (fileUrl.endsWith(".mp3")) {
+                    window.open(fileUrl, "_blank");
+                }
+            }
+
+            // Cargar archivos del directorio actual al cargar la página
+            loadFiles();
+        });
+    </script>
+</body>
+</html>
